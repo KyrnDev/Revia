@@ -1,0 +1,14 @@
+{
+	"name": "@revia/integration",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"dependencies": {
+		"@revia/core": "workspace:*"
+	},
+	"scripts": {
+		"build": "bun --cwd ../core run build && vite build --config ../../vite.integration.config.ts",
+		"dev": "bun --cwd ../core run build && vite --config ../../vite.integration.config.ts",
+		"typecheck": "tsc -p ./tsconfig.json --noEmit"
+	}
+}
