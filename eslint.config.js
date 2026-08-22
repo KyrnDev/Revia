@@ -22,6 +22,7 @@ export default config({
 		'build/',
 		'out/',
 		'coverage/',
+		'.github',
 	],
 }, {
 	rules: {
