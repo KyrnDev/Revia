@@ -85,3 +85,68 @@ bun run dev
 Revia is still being shaped, but the direction is deliberate.
 
 If this lands the way I want it to, it should feel less like “another web component library” and more like a serious reactive framework that happens to be built on the native-browser instead of fighting it.
+
+## Roadmap
+
+The roadmap is an intentional high-level outline of the priorities for the first release.
+
+### v0.1.0
+
+The v0.1.0 release is intended to be the first public release of the core runtime, with a focus on getting the foundations right and making sure the core reactive flow is solid. The goal is to have a usable runtime that can be used in a small app, with a clear path toward a more complete framework experience.
+
+- [x] Signal-based reactivity with fine-grained bindings, batching, deep objects and arrays, plus `Map` and `Set` support.
+- [x] Tagged HTML templates with property, attribute, event, model, conditional, and keyed-list bindings.
+- [x] `ReactiveElement` and `createElement(...)` authoring layers on top of native custom elements.
+- [x] Typed props, validation, readonly component-side props, model updates, and custom events.
+- [x] Shadow DOM by default, light DOM as an opt-in, native slots, and component-local CSS support.
+- [x] Lifecycle hooks, ownership/disposal, `afterUpdate()`, `freeze()`, `resume()`, `move()`, `clone()`, and recovery controls.
+- [x] An integration playground with nested components, child models, custom events, derived state, and keyed rendering.
+- [ ] Proper browser-level test coverage and regression checks for the runtime.
+- [ ] Template grammar hardening and clearer diagnostics for unsupported HTML contexts.
+- [ ] API documentation, focused examples, and a small migration/stability policy for early adopters.
+- [ ] Production configuration defaults and a final pass over package exports, generated types, and publish metadata.
+- [ ] Performance profiling and baseline benchmarks for common component and list-update workloads.
+
+### v0.2.0
+
+The v0.2.0 release focuses on the router package, but expanding the tests, and improving the diagnostics and template grammar are also priorities. We also want to release some kind of extension to help with debugging and inspecting reactive flows, since that is a common pain point in reactive frameworks.
+
+- [ ] Router package with nested routes, route-aware rendering, and navigation controls.
+- [ ] Route aliases, redirects, parameter matching, route guards, and regex fallbacks.
+- [ ] Browser-history and hash-history modes, with navigation state that stays usable outside a full Revia application.
+- [ ] Declarative `router-link` and `router-view` components built as normal web components.
+- [ ] Keep-alive and Teleport-style composition APIs built on the existing component lifecycle controls.
+- [ ] Improved event and prop TypeScript inference, including generated event detail types for class components.
+- [ ] A small developer diagnostics layer (extension) for inspecting signals, bindings, component updates, and invalid prop input.
+- [ ] More complete template support for SVG, accessibility-focused attributes, and additional native form controls.
+- [ ] Published examples covering a multi-page application and progressively adding Revia to an existing site.
+
+### v0.3.0
+
+The v0.3.0 release is going to focus on functional programming. We know that web components are class-based by default, but it would be great to be able to almost entirely author components as functions, with a class-based runtime underneath. This release will focus on making that possible, while also improving the template grammar and diagnostics and expanding APIs for developers to build upon the framework.
+
+- [ ] Functional component authoring with `createElement(...)` and a class-based runtime underneath.
+- [ ] Improvements around the available APIs, including offering internal hooks for developers to build on top of the framework.
+- [ ] Function-friendly lifecycle APIs for creation, connection, updates, disconnection, disposal, and component-owned cleanup.
+- [ ] Composable prop and model helpers with strong inference for defaults, validators, attributes, and `update:<prop>` events.
+- [ ] A clear function-component configuration surface for shadow/light DOM, styles, slots, debug settings, and component naming.
+- [ ] Reusable composition helpers for packaging signals, derived state, effects, event handling, and cleanup into framework-agnostic utilities.
+- [ ] Better component composition patterns for wrapping, extending, and sharing behaviour without falling back to inheritance.
+- [ ] Focused function-first examples showing forms, nested models, slots, typed events, and external CSS without a framework-specific compile step.
+
+### v0.4.0
+
+The v0.4.0 release is intended to be a components framework release, this focuses on real-world example components, that follow a clean CSS token system, that are modern, accessible, and easily expandable. The goal for this is a demo for people interested in using Revia to build a full application, while also offering a functional component library that you can use to get started.
+
+- [ ] First-party component package with inputs, buttons, switches, modals, date pickers, and similar primitives.
+- [ ] Shared CSS token system for colour, spacing, typography, motion, elevation, and component sizing.
+- [ ] Accessible form primitives: checkbox, radio group, combobox, select, textarea, password input, and validation messaging.
+- [ ] Overlay primitives including dialogs, drawers, popovers, tooltips, menus, and focus management.
+- [ ] More specialised controls such as date pickers, colour pickers, icon pickers, tabs, details, and data-display components.
+- [ ] Shadow DOM and light DOM styling presets so components can be used in isolated apps or existing design systems without friction.
+- [ ] Theme switching, CSS-variable overrides, and a clear path for consuming components without adopting a complete visual system.
+- [ ] Component documentation and interactive examples that show props, slots, events, models, and accessibility behaviour.
+
+### Future
+
+The future of Revia is intentionally open-ended. The goal is to build a framework that is useful, approachable, and practical for real-world applications, while staying close to the platform and avoiding unnecessary complexity. The roadmap will evolve based on feedback from early adopters, and the project will continue to focus on making the core runtime solid, while expanding the ecosystem with useful tools and components, there is a lot of room for growth and improvement.
