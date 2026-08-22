@@ -1,7 +1,10 @@
 {
 	"extends": "../../tsconfig.json",
 	"compilerOptions": {
-		"outDir": "./dist"
+		"outDir": "./dist",
+		"paths": {
+			"@revia/core": ["../core/dist/index.d.ts"]
+		}
 	},
 	"include": [
 		"./src/**/*.ts"

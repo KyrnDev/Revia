@@ -1,0 +1,100 @@
+button {
+	background-color: #007bff;
+	color: white;
+	border: none;
+	padding: 10px 20px;
+	font-size: 16px;
+	cursor: pointer;
+	border-radius: 4px;
+}
+
+button:hover {
+	color: red;
+}
+
+button.r-button--xxs {
+	padding: 0.125rem 0.2rem;
+	font-size: 0.125rem;
+}
+
+button.r-button--xs {
+	padding: 0.25rem 0.4rem;
+	font-size: 0.25rem;
+}
+
+button.r-button--sm {
+	padding: 0.5rem 0.65rem;
+	font-size: 0.5rem;
+}
+
+button.r-button--md {
+	padding: 0.85rem 1rem;
+	font-size: 1rem;
+	max-height: 44px;
+}
+
+button.r-button--lg {
+	padding: 2rem 3rem;
+	font-size: 2rem;
+}
+
+button.r-button--xl {
+	padding: 4rem 6rem;
+	font-size: 4rem;
+}
+
+button.r-button--xxl {
+	padding: 8rem 12rem;
+	font-size: 8rem;
+}
+
+button.r-button--primary {
+	background-color: #007bff;
+	color: white;
+}
+
+button.r-button--secondary {
+	background-color: #6c757d;
+	color: white;
+}
+
+button.r-button--success {
+	background-color: #28a745;
+	color: white;
+}
+
+button.r-button--danger {
+	background-color: #dc3545;
+	color: white;
+}
+
+button.r-button--warning {
+	background-color: #ffc107;
+	color: black;
+}
+
+button.r-button--info {
+	background-color: #17a2b8;
+	color: white;
+}
+
+button.r-button--light {
+	background-color: #f8f9fa;
+	color: black;
+}
+
+button.r-button--dark {
+	background-color: #343a40;
+	color: white;
+}
+
+
+/*
+	xxs = 0.125rem
+	xs = 0.25rem
+	sm = 0.5rem
+	md = 1rem
+	lg = 2rem
+	xl = 4rem
+	xxl = 8rem
+*/

@@ -1,48 +1,55 @@
-import { ReactiveElement, html, signal } from '@revia/core';
-import styles from './counter.css';
+import {
+	css,
+	defineElement,
+	defineProps,
+	html,
+	type PropsFromDefinition,
+	ReactiveElement,
+} from '@revia/core';
 
-export class Counter extends ReactiveElement {
-	public static override dom = 'light' as const;
-	public static override styles = [styles];
-	public readonly count = signal(0);
+const counterProps = defineProps({
+	value: { type: Number, default: 0, model: true },
+	step: { type: Number, default: 1 },
+	label: { type: String, default: 'Counter' },
+});
 
-	public increment() {
-		this.count.value++;
-	}
+type ICounterProps = PropsFromDefinition<typeof counterProps>;
 
-	public decrement() {
-		this.count.value--;
-	}
+type ICounterEvents = {
+	counted: { value: number, delta: number },
+};
 
-	public override created() {
-		console.log('Counter created');
-	}
+export class RCounter extends ReactiveElement<ICounterProps, 'value', ICounterEvents> {
+	public static override props = counterProps;
 
-	public override connected() {
-		console.log('Counter connected');
-	}
-
-	public override disconnected() {
-		console.log('Counter disconnected');
-	}
-
-	public override updated() {
-		console.log('Counter updated');
-	}
-
-	public override disposed() {
-		console.log('Counter disposed');
-	}
+	public static override styles = css`
+		:host { display: block; }
+		.counter { display: grid; gap: 0.7rem; padding: 1rem; border: 1px solid #284655; border-radius: 0.8rem; background: #0b1922; }
+		.header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; color: #9ec7df; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; }
+		.value { color: #f3f8fa; font: 500 2.75rem/1 Georgia, serif; }
+		.actions { display: flex; gap: 0.5rem; }
+		button { border: 0; border-radius: 0.5rem; padding: 0.55rem 0.75rem; background: #d6edf9; color: #10222c; font: inherit; cursor: pointer; }
+		button:last-child { background: #263b47; color: #d9e9f0; }
+	`;
 
 	public render() {
 		return html`
-			<div>
-				<button @click=${() => this.decrement()}>Decrement</button>
-				<span>${() => this.count.value}</span>
-				<button @click=${() => this.increment()}>Increment</button>
-			</div>
+			<section class="counter">
+				<div class="header"><slot name="label">${() => this.props.label}</slot><span>step ${() => this.props.step}</span></div>
+				<div class="value">${() => this.props.value}</div>
+				<div class="actions">
+					<button @click=${() => this.change(this.props.step)}>Increase</button>
+					<button @click=${() => this.change(-this.props.step)}>Decrease</button>
+				</div>
+			</section>
 		`;
 	}
-};
 
-customElements.define('my-counter', Counter);
+	private change(delta: number): void {
+		const value = this.props.value + delta;
+		this.updateModel('value', value);
+		this.emit('counted', { value, delta });
+	}
+}
+
+defineElement('r-counter', RCounter);

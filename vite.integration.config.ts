@@ -7,7 +7,6 @@ const coreDistEntry = resolve(workspaceRoot, 'packages/core/dist/index.js');
 const integrationRoot = resolve(workspaceRoot, 'packages/integration');
 const integrationDistRoot = resolve(integrationRoot, 'dist');
 const integrationIndex = resolve(integrationRoot, 'index.html');
-const integrationContactForm = resolve(integrationRoot, 'contact-form.html');
 
 export default defineConfig({
 	root: integrationRoot,
@@ -27,7 +26,6 @@ export default defineConfig({
 		rollupOptions: {
 			input: {
 				index: integrationIndex,
-				contactForm: integrationContactForm,
 			},
 		},
 	},

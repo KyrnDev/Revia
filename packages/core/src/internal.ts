@@ -1,8 +1,14 @@
 import type { ICssTemplate } from './template';
 
+/** Selects whether a component renders into an open shadow root or directly into its host element. */
 export type DomMode = 'shadow' | 'light';
 
-export type StyleEntry = string | ICssTemplate;
+export type IExternalStyleSheet = {
+	readonly reviaKind: 'css-file',
+	readonly href: string,
+};
+
+export type StyleEntry = string | ICssTemplate | IExternalStyleSheet;
 
 export type Disposable = {
 	dispose: () => void,
@@ -13,6 +19,9 @@ export type IReactiveOwner = {
 	recordSchedule?: (label: string) => void,
 	recordExecution?: (label: string) => void,
 	notifyUpdated?: (label: string) => void,
+	isFrozen?: () => boolean,
+	deferReactiveWork?: (work: () => void) => void,
+	handleError?: (error: unknown) => void,
 };
 
 export type IReactiveRenderHost = HTMLElement & IReactiveOwner & {

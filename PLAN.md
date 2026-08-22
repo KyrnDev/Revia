@@ -1,10 +1,10 @@
-# RWC Plan
+# Revia Plan
 
 ## Vision
 
 Build a TypeScript-first reactive web component library that feels modern, fast, and native to the platform:
 
-- class-first custom elements
+- function-first authoring with a class-based custom element runtime underneath
 - fine-grained proxy-based reactivity
 - precise DOM updates without a VDOM
 - first-class props and explicit model bindings
@@ -20,7 +20,7 @@ Target positioning:
 
 ## Product Goals
 
-1. Make class-authored custom elements pleasant enough that helpers feel optional, not necessary.
+1. Make function-authored components pleasant enough to be the default while keeping the class layer powerful.
 2. Preserve platform primitives instead of hiding them behind a fake component model.
 3. Keep updates fine-grained so common interactions stay fast.
 4. Ship excellent TypeScript ergonomics from day one.
@@ -72,13 +72,13 @@ Preferred architecture:
 - template part binding system
 - batched scheduler
 - base component class
-- optional helpers layered on top
+- function-first authoring layered on top
 
-Initial reactivity implementation:
+Current reactivity implementation:
 
-- start with `@vue/reactivity` behind an adapter
-- do not leak Vue-specific APIs as the only public surface
-- keep the option to replace the engine later
+- an internal proxy-based engine, with no framework runtime dependency
+- a library-native public API (`signal`, `derive`, and `effect`)
+- Vue is a useful behavioural reference, not an implementation dependency
 
 ### Rendering Direction
 
@@ -99,29 +99,36 @@ This is a runtime-first, compile-free core. A compiler or TSX adapter can come l
 The canonical authoring style is:
 
 ```ts
-class MyElement extends ReactiveElement {}
+const MyElement = createElement('my-element', ({ prop }) => {
+	const label = prop('label', String, 'Hello');
+
+	return html`
+		<p>${() => label.value}</p>
+	`;
+});
 ```
 
-This is class-first, not function-component-first.
+This is function-first for authoring, while still compiling down to a real custom element class underneath.
 
 ### Layering Strategy
 
 Authoring layers should be:
 
-1. `ReactiveElement` and core primitives
-2. `defineComponent(...)`
-3. builder/fluent helpers on top of `defineComponent(...)`
+1. `createElement(...)` and core primitives
+2. `ReactiveElement` for lower-level control
+3. builder/fluent helpers on top of `createElement(...)`
 4. optional decorators later
 
-The helper layer should build on the class model, not replace it.
+The authoring layer should build on the class model, not replace it.
 
 ### Registration
 
-Support:
+Registration remains the developer's responsibility and follows normal browser JavaScript rules.
 
-1. `customElements.define(...)`
-2. a library registration helper
-3. optional decorator-based registration later
+- `customElements.define(...)` is always valid
+- `defineElement(...)` and `@register(...)` are optional convenience APIs
+- Revia core will not own a component registry, auto-import convention, or application bootstrap layer
+- projects with a build step can organize registration however they prefer; projects without one can use ordinary ESM imports
 
 ## Template System
 
@@ -149,16 +156,36 @@ Direct values are allowed, but should be treated as eager interpolation. In deve
 Current syntax direction:
 
 - text/content: `${...}`
-- property/data binding: `:prop=${...}`
+- smart binding by default: `prop=${...}` tries property first, then falls back to attribute assignment
+- explicit property/data binding: `:prop=${...}`
 - event binding: `@event=${...}`
 - model binding: `*prop=${signal}`
 
 ### Binding Resolution
 
+For unprefixed reactive bindings:
+
+- try property assignment first
+- if the target does not expose that property, fall back to attribute assignment
+
 For `:prop`:
 
-- if the target declares it as a component prop, treat it as a property/data binding
-- otherwise treat it as an attribute binding
+- keep it as an explicit property-first form
+
+Exact attribute bindings are compiled into inert internal attributes before custom elements are created. This prevents a child prop validator from seeing a temporary template marker. Both quoted and unquoted forms are supported:
+
+```ts
+html`<my-input *value=${value}></my-input>`;
+html`<my-input *value="${value}"></my-input>`;
+```
+
+Compound values are also supported:
+
+```ts
+html`<div class="panel-${() => this.theme.value}-${() => this.size.value}"></div>`;
+```
+
+Template expressions are intentionally limited to text content and attribute values. Dynamic tag names, comments, and raw-text elements (`script`, `style`, `textarea`, and `title`) fail with a clear development error rather than being parsed ambiguously. Every dynamic attribute, including compound values, is replaced with inert metadata before a custom element can observe a temporary placeholder value.
 
 ### Control Flow
 
@@ -235,8 +262,14 @@ Signals must support:
 - nested object writes
 - arrays and array mutations
 - property-level dependency tracking
+- object-key iteration tracking (`Object.keys`, spread, and `for...in`)
+- `Map` and `Set` reads, writes, membership checks, size, and iteration
 
 The runtime should invalidate only the property dependencies actually touched where possible.
+
+`Map` and `Set` use dedicated collection instrumentation, following the same broad approach as Vue: keyed reads are tracked separately from value/key iteration and collection size. This keeps `map.get('one')` from rerunning just because an unrelated key changes.
+
+`Date`, `WeakMap`, `WeakSet`, and custom class instances are deliberately not proxied. Replace the value through `.value = ...` when it changes; this avoids invalid method receivers and makes their reactivity contract explicit.
 
 ### Derived Values And Effects
 
@@ -253,6 +286,12 @@ Mental model:
 ### Signal Ownership
 
 Signals and effects created during component setup should become owned by that component automatically.
+
+Implemented ownership paths:
+
+- `setup()`, lifecycle hooks, render bindings, and function-component setup run with the component as their reactive owner
+- `own(resource)` covers class-field resources, which JavaScript initializes after the base constructor has run
+- `scope(() => ...)` attaches resources created in delayed or async callbacks to the component that owns them
 
 When a component is disposed:
 
@@ -273,11 +312,35 @@ static props = {
 
 Decorators may be added later, but static schema is the base.
 
+### Typed Class Props
+
+Class components can keep their property schema and instance contract aligned without decorators:
+
+```ts
+const buttonProps = defineProps({
+  value: { type: Number, default: 0, model: true, readonly: true },
+  label: { type: String, default: 'Count' },
+});
+
+class CounterButton extends ReactiveElement<PropsFromDefinition<typeof buttonProps>, 'value'> {
+  static props = buttonProps;
+
+  render() {
+    return html`<button>${() => this.props.label}: ${() => this.props.value}</button>`;
+  }
+}
+```
+
+`this.props` and `updateModel('value', nextValue)` are typed from the generic contract. TypeScript cannot infer an instance type from a static class field alone, so the explicit generic remains the honest class-based form.
+
 ### Prop Rules
 
 - props are readonly inside the component by default
 - parent-owned data stays parent-owned
 - local mutable state should live in signals, not props
+- use `this.props.name` for a runtime readonly view in class components
+- component-side readonly behaviour is deep: nested objects, arrays, `Map`, and `Set` values cannot be mutated through a prop
+- parent property assignment remains valid; models update upward through `updateModel(...)`
 
 ### DOM Visibility
 
@@ -305,6 +368,14 @@ Unset or explicit false-like values should resolve to `false`.
 ### Invalid Input Handling
 
 We should not silently coerce bad data into something surprising.
+
+Implemented rules:
+
+- boolean attributes accept only present/empty, `"true"`, or `"false"`
+- number attributes must be non-empty finite numbers
+- object and array attributes require valid JSON when explicitly enabled
+- required values, runtime types, custom validators, serializers, and deserializers fail the component instead of coercing invalid input
+- conflicting attribute names and impossible `reflect` declarations fail schema initialization
 
 Current direction:
 
@@ -388,10 +459,18 @@ Current direction:
 
 - model updates should be event-driven
 - reflection should be opt-in and not the main model mechanism
+- `updateModel(name, value)` validates then emits a bubbling, composed `update:<name>` event without mutating the incoming prop
 
 ## State Placement
 
-Inside classes:
+Function-first:
+
+- props are external inputs exposed through `prop(...)`
+- signals are internal mutable state
+- derived values come from `derive(...)`
+- side effects come from `effect(...)`
+
+Lower-level classes:
 
 - props are external inputs
 - signals are internal mutable state
@@ -449,6 +528,12 @@ Current preferred naming:
 Purpose:
 
 - await DOM update completion in a modern, clear way
+- waits for the reactive effect queue and that component's pending `updated()` hook to settle
+
+### Events And Recovery
+
+- `emit(name, detail)` dispatches bubbling, composed custom events and can be typed through the third `ReactiveElement` generic
+- `recover()` explicitly clears a render or validation failure after the caller has fixed its cause; failures never silently resume by themselves
 
 ## Scheduling
 
@@ -490,13 +575,12 @@ Expected behavior:
 - stop effects
 - remove the element from the DOM
 
-### Candidate Future APIs
+### Additional Control APIs
 
-These are worth keeping in mind, but are not yet committed as V1 guarantees:
-
-- `freeze()`
-- `clone()`
-- `move(target)`
+- `freeze()` pauses component-owned reactive work without touching timers or other non-reactive work
+- `resume()` flushes deferred reactive work
+- `clone(deep?)` creates a fresh instance with the same declared props and optional projected children; local setup state is recreated, never shared
+- `move(target)` moves the current live instance to a new DOM target and rejects disposed/self targets
 
 ### Teleport Direction
 
@@ -691,7 +775,7 @@ Confirmed:
 - simple component composition with native slots feels natural
 - fallback content works
 - named slots work
-- no fake slot API is needed for the class-first base story
+- no fake slot API is needed for the platform-first story
 
 ### Shadow vs Light
 
@@ -707,29 +791,30 @@ Confirmed:
 These are still genuinely open and should remain visible:
 
 1. What exact runtime style value format should `static styles` accept long-term?
-2. What exact public shape should `defineComponent(...)` take?
-3. What exact public shape should the builder layer take?
+2. What exact public shape should `createElement(...)` take long-term?
+3. What exact public shape should the builder layer on top of `createElement(...)` take?
 4. Do we expose a library-native reactive API only, or partially re-export wrapped Vue-style primitives?
 5. How far do we go in V1 on light DOM slot/runtime normalization versus documented caveats?
 6. What exact API should a future signal-part extraction helper use?
-7. Which candidate control APIs belong in V1 versus later?
+7. What keep-alive and declarative Teleport helpers should build on `freeze()` and `move(target)`?
 
 ## Recommended V1 Scope
 
 V1 should include:
 
-1. `ReactiveElement`
-2. signals, derived values, and effects
-3. tagged HTML templates
-4. fine-grained part binding
-5. prop schema system
-6. model binding support
-7. `emit(...)`
-8. shadow/light DOM mode selection
-9. `static styles`
-10. native slot composition
-11. lifecycle hooks: `created()`, `connected()`, `updated()`, `disconnected()`, `disposed()`
-12. batching scheduler
+1. `createElement(...)`
+2. `ReactiveElement`
+3. signals, derived values, and effects
+4. tagged HTML templates
+5. fine-grained part binding
+6. prop schema system
+7. model binding support
+8. `updateModel(...)`
+9. shadow/light DOM mode selection
+10. `static styles`
+11. native slot composition
+12. lifecycle hooks: `created()`, `connected()`, `updated()`, `disconnected()`, `disposed()`
+13. batching scheduler
 
 V1 should not require:
 
@@ -746,7 +831,8 @@ V1 should not require:
 
 - finalize naming
 - finalize prop/model schema
-- finalize base class public surface
+- finalize `createElement(...)` public surface
+- keep the base class surface stable underneath it
 - finalize `static styles` accepted forms
 
 ### Phase 1: Runtime Core
@@ -758,11 +844,12 @@ V1 should not require:
 
 ### Phase 2: Component System
 
+- `createElement(...)`
 - `ReactiveElement`
 - props
 - models
 - lifecycle hooks
-- `emit(...)`
+- `updateModel(...)`
 - DOM mode selection
 - `static styles`
 
@@ -775,8 +862,7 @@ V1 should not require:
 
 ### Phase 4: Public API Layering
 
-- `defineComponent(...)`
-- optional builder layer
+- optional builder layer on top of `createElement(...)`
 - optional decorators if still worthwhile
 
 ### Phase 5: Hardening And Docs
@@ -801,50 +887,42 @@ Must-test areas:
 - shadow vs light style behavior
 - ownership and disposal
 - lifecycle ordering
+- exact and compound template attribute bindings
+- model propagation through `*prop=${signal}`
+- development failure and warning behaviour
 
 ## Minimal Example Direction
 
 ```ts
 import cardStyles from "./my-card.css";
 
-class MyCounter extends ReactiveElement {
-  static dom = "shadow";
+const MyCounter = createElement('my-counter', ({ prop }) => {
+  const value = prop('value', { type: Number, readonly: true, model: true });
+  const label = prop('label', String, 'Counter');
+  const count = signal(0);
+  const doubled = derive(() => count.value * 2);
 
-  static styles = [cardStyles];
-
-  static props = {
-    value: { type: Number, readonly: true, model: true },
-    label: { type: String, default: "Counter" },
+  const increment = () => {
+    count.value++;
   };
 
-  count = signal(0);
-  doubled = derive(() => this.count.value * 2);
-
-  created() {}
-
-  connected() {}
-
-  increment() {
-    this.count.value++;
-    this.emit("update:value", this.count.value);
-  }
-
-  render() {
-    return html`
-      <button @click=${() => this.increment()}>
-        ${() => this.label}: ${() => this.doubled.value}
-      </button>
-      <slot></slot>
-    `;
-  }
-}
+  return html`
+    <button @click=${increment}>
+      ${() => label.value}: ${() => doubled.value} / ${() => value.value}
+    </button>
+    <slot></slot>
+  `;
+}, {
+  dom: 'shadow',
+  styles: [cardStyles],
+});
 ```
 
 ## Current Summary
 
 The project is now firmly pointed at:
 
-- class-first custom elements
+- function-first authoring with a class runtime underneath
 - fine-grained reactive rendering
 - native slots
 - shadow default, light opt-in

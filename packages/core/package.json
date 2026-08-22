@@ -17,6 +17,7 @@
 	"scripts": {
 		"build": "tsc -p ./tsconfig.build.json && bun ./scripts/fix-import-specifiers.ts",
 		"dev": "tsc -p ./tsconfig.build.json --watch",
+		"test": "bun test ./src",
 		"typecheck": "tsc -p ./tsconfig.json --noEmit"
 	},
 	"publishConfig": {

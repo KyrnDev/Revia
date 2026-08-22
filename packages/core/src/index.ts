@@ -1,5 +1,34 @@
 export { type DomMode, ReactiveElement } from './component';
+export { configureRevia, type ReviaConfiguration } from './config';
 export {
+	createElement,
+	type CreateElementContext,
+	type CreateElementOptions,
+	type CreateElementProp,
+	type CreateElementRender,
+	type IElementProp,
+} from './create-element';
+export {
+	customElement,
+	type CustomElementClass,
+	defineElement,
+	type DefineElementOptions,
+	register,
+} from './custom-element';
+export {
+	defineProps,
+	type IPropDefinition,
+	type IPropsDefinition,
+	type IPropsSchema,
+	type PropDefaultValue,
+	type PropDeserializer,
+	type PropSerializer,
+	type PropsFromDefinition,
+	type PropType,
+	type PropValidator,
+} from './props';
+export {
+	afterReactiveFlush,
 	createEffect,
 	derive,
 	effect,
@@ -8,6 +37,7 @@ export {
 	isSignal,
 	signal,
 } from './reactivity';
+export { cssFile } from './styles';
 export {
 	css,
 	forEach,
