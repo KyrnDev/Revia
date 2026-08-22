@@ -33,4 +33,4 @@ jobs:
         run: bun run typecheck
 
       - name: Run unit tests
-        run: bun run --cwd ./packages/core test
+        run: bun test

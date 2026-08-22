@@ -744,8 +744,9 @@ function reconcileItemStates(
 
 		moveRange(itemState.start, itemState.end, beforeNode);
 
-		const shouldUpdate = !Object.is(itemState.identity, normalized.identity)
-			|| itemState.index !== index;
+		// A stable key and item identity means this range can move without remounting.
+		// Recreating it on an index-only change defeats keyed DOM preservation.
+		const shouldUpdate = !Object.is(itemState.identity, normalized.identity);
 
 		if (shouldUpdate) {
 			for (const cleanup of itemState.cleanups) {

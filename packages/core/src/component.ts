@@ -342,8 +342,13 @@ export abstract class ReactiveElement<
 
 		if (!this._hasCreated) {
 			this._ensureCreated();
-		} else if (this.isConnected) {
+		}
+
+		if (!this._hasFailed && this.isConnected) {
 			this._mount();
+			if (!this._hasFailed) {
+				this._runOwned(() => this.connected());
+			}
 		}
 
 		return !this._hasFailed;
