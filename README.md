@@ -13,6 +13,7 @@
 	<a href="https://npmjs.org/package/@revia/core"><img alt="npm" src="https://img.shields.io/npm/v/%40revia%2Fcore?style=for-the-badge&color=cb3837&logo=npm" /></a>
 	<img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-first-3178C6?style=for-the-badge&logo=typescript&logoColor=white" />
 	<img alt="ESM only" src="https://img.shields.io/badge/ESM-only-0f172a?style=for-the-badge" />
+	<img alt="Semantic Versioning" src="https://img.shields.io/badge/versioning-SemVer-3f4551?style=for-the-badge" />
 </p>
 
 Revia started from a fairly simple place. I spend a lot of time around reactive frameworks and web components, and it has always felt like there should be a cleaner overlap between the two than what we usually end up with. I wanted something TypeScript-first, reactive, and close to the platform, but without feeling bare or awkward once you move beyond a single component. A lot of that thinking comes from genuinely loving Vue.js and having a lot of respect for how good its flow feels in day to day work, and wanting to build a web component based framework that feels just as considered when you are actually using it.
